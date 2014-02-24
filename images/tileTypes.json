@@ -1,0 +1,31 @@
+    {
+     "tiles" : [
+    			{"id" : 1, "name" :  "GRASS1", 				      "texture" : "grass1.png", "tags" :["GRASS"]},
+    			{"id" : 2, "name" :  "GRASS2", 				      "texture" : "grass2.png", "tags" :["GRASS"]},
+    			{"id" : 3, "name" :  "DIRT1", 				      "texture" : "dirt1.png", "tags" :["DIRT"]},
+    			{"id" : 4, "name" :  "DIRT2", 				      "texture" : "dirt2.png", "tags" :["DIRT"]},
+    			{"id" : 5, "name" :  "DIRT_TO_GRASS_HOR1",        "texture" : "dirtToGrassHor1.png", "tags" :["GRASS", "DIRT"]},
+    			{"id" : 6, "name" :  "DIRT_TO_GRASS_VER1",        "texture" : "dirtToGrassVert1.png", "tags" :["GRASS", "DIRT"]},
+                {"id" : 7, "name" :  "GRASS_TO_DIRT_HOR1",        "texture" : "grassToDirtHor1.png", "tags" :["GRASS", "DIRT"]},
+                {"id" : 8, "name" :  "GRASS_TO_DIRT_VER1",        "texture" : "grassToDirtVert1.png", "tags" :["GRASS", "DIRT"]},
+                {"id" : 9, "name" :  "GRASS_TO_DIRT_CORNER_LT1",  "texture" : "grassToDirtCornerLT1.png", "tags" :["GRASS", "DIRT"]},
+                {"id" : 10, "name" : "GRASS_TO_DIRT_CORNER_LB1",  "texture" : "grassToDirtCornerLB1.png", "tags" :["GRASS", "DIRT"]},
+                {"id" : 11, "name" : "GRASS_TO_DIRT_CORNER_RT1",  "texture" : "grassToDirtCornerRT1.png", "tags" :["GRASS", "DIRT"]},
+                {"id" : 12, "name" : "GRASS_TO_DIRT_CORNER_RB1",  "texture" : "grassToDirtCornerRB1.png", "tags" :["GRASS", "DIRT"]},
+                {"id" : 13, "name" : "SPAWN1",                    "texture" : "spawn1.png", "tags" :["GRASS", "SPAWN"]},
+                {"id" : 14, "name" : "SOLDIER1",                    "texture" : "soldier1.png", "tags" :["PLAYER"]},
+                {"id" : 15, "name" : "SOLDIER2",                    "texture" : "soldier2.png", "tags" :["PLAYER"]},
+                {"id" : 16, "name" : "SOLDIER3",                    "texture" : "soldier3.png", "tags" :["PLAYER"]},
+                {"id" : 17, "name" : "SOLDIER4",                    "texture" : "soldier4.png", "tags" :["PLAYER"]},
+                {"id" : 18, "name" : "WALL_GRASS_HOR1",              "texture" : "wall_grass_hor1.png", "tags" :["WALL", "GRASS", "IMPASSABLE"]},
+                {"id" : 19, "name" : "WALL_GRASS_VER1",              "texture" : "wall_grass_ver1.png", "tags" :["WALL", "GRASS", "IMPASSABLE"]},
+                {"id" : 20, "name" : "WALL_GRASS_CORNER_LT1",              "texture" : "wall_glass_corner_lt1.png", "tags" :["WALL", "GRASS", "IMPASSABLE"]},
+                {"id" : 21, "name" : "WALL_GRASS_CORNER_LB1",              "texture" : "wall_grass_corner_lb1.png", "tags" :["WALL", "GRASS", "IMPASSABLE"]},
+                {"id" : 22, "name" : "WALL_GRASS_CORNER_RT1",              "texture" : "wall_grass_corner_rt1.png", "tags" :["WALL", "GRASS", "IMPASSABLE"]},
+                {"id" : 23, "name" : "WALL_GRASS_CORNER_RB1",              "texture" : "wall_grass_corner_rb1.png", "tags" :["WALL", "GRASS", "IMPASSABLE"]},
+                {"id" : 24, "name" : "WALL_GRASS_DOOR_HOR1",              "texture" : "wall_grass_door_hor1.png", "tags" :["WALL", "GRASS", "DOOR"]}
+    			 ]
+    }
+
+
+
