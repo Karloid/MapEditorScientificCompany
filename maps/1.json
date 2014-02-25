@@ -1,0 +1,5 @@
+test_resources{
+"width" : 3,
+"height" : 2,
+"tiles" : [[20,21],[18,18],[22,23]]
+}

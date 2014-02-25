@@ -1,4 +1,4 @@
-package editor;
+package editor.model;
 
 import java.util.Collection;
 
@@ -34,6 +34,6 @@ public class TileType {
 
     @Override
     public String toString() {
-        return "[id: " + id + ", name: " + name + ", texture: " + texture + " ]";
+        return "[id: " + id + ", name: " + name + ", texture: " + texture + " ]" + tags.toString();
     }
 }

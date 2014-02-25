@@ -1,4 +1,9 @@
-package editor;
+package editor.gui;
+
+import editor.model.MacroCommand;
+import editor.model.ModelManager;
+import editor.model.TileType;
+import editor.model.UpdateTileAtCommand;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -7,8 +12,10 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
 
-public class WorkingAreaPanel extends JPanel implements MouseMotionListener, MouseWheelListener, MouseListener {
+public class WorkingAreaPanel extends JPanel implements MouseMotionListener, MouseWheelListener, MouseListener, Observer {
     private Graphics2D graphics2D;
     private int startXOfWorkingArea;
     private int startYOfWorkingArea;
@@ -17,8 +24,10 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
     private int necessaryWidth;
     private int necessaryHeight;
     private Image[] images;
+    private MacroCommand lastMacroCommand;
 
     public WorkingAreaPanel() {
+        ModelManager.getInstance().registerObserver(this);
         images = getImages();
         computeNecessarySize();
         setNecessarySizeForComponent();
@@ -40,8 +49,8 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
 
     private void computeNecessarySize() {
         ModelManager modelManager = ModelManager.getInstance();
-        necessaryWidth = modelManager.getTileSizeInPixels() * ModelManager.MAP_WIDTH_IN_TILES;
-        necessaryHeight = modelManager.getTileSizeInPixels() * ModelManager.MAP_HEIGHT_IN_TILES;
+        necessaryWidth = modelManager.getTileSizeInPixels() * modelManager.getMapWidth();
+        necessaryHeight = modelManager.getTileSizeInPixels() * modelManager.getMapHeight();
     }
 
     @Override
@@ -58,8 +67,8 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
         startXOfWorkingArea = (getWidth() - necessaryWidth) / 2;
         startYOfWorkingArea = (getHeight() - necessaryHeight) / 2;
         graphics2D.setColor(new Color(12, 255, 0));
-        for (int i = 0; i < ModelManager.MAP_WIDTH_IN_TILES; i++) {
-            for (int j = 0; j < ModelManager.MAP_HEIGHT_IN_TILES; j++) {
+        for (int i = 0; i < modelManager.getMapWidth(); i++) {
+            for (int j = 0; j < modelManager.getMapHeight(); j++) {
                 final int X_TO_DRAW = startXOfWorkingArea + i * tileSizeInPixels;
                 final int Y_TO_DRAW = startYOfWorkingArea + j * tileSizeInPixels;
                 graphics2D.translate(X_TO_DRAW, Y_TO_DRAW);
@@ -74,7 +83,7 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
             }
         }
 
-     //   drawSelectedTileBorder();
+        drawSelectedTileBorder();
     }
 
     private void drawSelectedTileBorder() {
@@ -89,11 +98,11 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
     }
 
     private Image[] getImages() {
-        ArrayList<TileType> tyleTypes = ModelManager.getInstance().getTileTypes();
-        Image[] images = new Image[tyleTypes.size()];
+        ArrayList<TileType> tileTypes = ModelManager.getInstance().getTileTypes();
+        Image[] images = new Image[tileTypes.size()];
         try {
             int i = 0;
-            for (TileType t : tyleTypes)
+            for (TileType t : tileTypes)
                 images[i++] = ImageIO.read(new File(ModelManager.IMAGES_DIR + t.getTexture()));
         }
         catch (IOException e) {
@@ -117,7 +126,7 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
             if (coordinateBounds(MOUSE_X, MOUSE_Y)) {
                 selectedX = (MOUSE_X - startXOfWorkingArea - ((MOUSE_X - startXOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
                 selectedY = (MOUSE_Y - startYOfWorkingArea - ((MOUSE_Y - startYOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
-                modelManager.updateTileAt(selectedX, selectedY);
+                lastMacroCommand.addCommand(new UpdateTileAtCommand(selectedX, selectedY));
             }
             else {
                 selectedX = -1;
@@ -151,11 +160,8 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
         ModelManager modelManager = ModelManager.getInstance();
-        if (modelManager.increaseTileSizeInPixels(e.getWheelRotation())) {
-            computeNecessarySize();
-            setNecessarySizeForComponent();
-            repaint();
-        }
+        if (modelManager.increaseTileSizeInPixels(e.getWheelRotation()))
+            doUpdate();
     }
 
     @Override
@@ -167,7 +173,8 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
         if (coordinateBounds(MOUSE_X, MOUSE_Y)) {
             selectedX = (MOUSE_X - startXOfWorkingArea - ((MOUSE_X - startXOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
             selectedY = (MOUSE_Y - startYOfWorkingArea - ((MOUSE_Y - startYOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
-            modelManager.updateTileAt(selectedX, selectedY);
+            lastMacroCommand.addCommand(new UpdateTileAtCommand(selectedX, selectedY));
+            modelManager.performCommand(lastMacroCommand);
         }
         else {
             selectedX = -1;
@@ -178,11 +185,13 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
 
     @Override
     public void mousePressed(MouseEvent e) {
-
+        lastMacroCommand = new MacroCommand();
+        ModelManager.getInstance().performCommand(lastMacroCommand);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        lastMacroCommand.perform();
 
     }
 
@@ -194,5 +203,16 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
     @Override
     public void mouseExited(MouseEvent e) {
 
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        doUpdate();
+    }
+
+    private void doUpdate() {
+        computeNecessarySize();
+        setNecessarySizeForComponent();
+        repaint();
     }
 }

@@ -1,5 +1,5 @@
 
-package editor;
+package editor.gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +30,7 @@ public class MainFrame extends JFrame {
 
     private void prepareToolkitInternalFrame() {
         JInternalFrame toolkitInternalFrame = new ToolkitInternalFrame();
-        toolkitInternalFrame.reshape(1, 30, 170, 600);
+        toolkitInternalFrame.reshape(1, 30, 170, 400);
         toolkitInternalFrame.setLayer(2);
         toolkitInternalFrame.setVisible(true);
         desktop.add(toolkitInternalFrame);
@@ -44,9 +44,10 @@ public class MainFrame extends JFrame {
     }
 
     private void prepareWorkingAreaInternalFrame() {
-        JInternalFrame workingAreaInternalFrame = new JInternalFrame("", false, false, false, false);
+        JInternalFrame workingAreaInternalFrame = new JInternalFrame(null, false, false, false, false);
         WorkingAreaPanel mapPanel = new WorkingAreaPanel();
         JScrollPane scrollPane = new JScrollPane(mapPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        workingAreaInternalFrame.setFrameIcon(null);
         workingAreaInternalFrame.setLayer(1);
         workingAreaInternalFrame.add(scrollPane);
         workingAreaInternalFrame.setVisible(true);
