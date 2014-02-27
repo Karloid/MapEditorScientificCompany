@@ -16,22 +16,25 @@ import java.util.Observable;
 import java.util.Observer;
 
 public class WorkingAreaPanel extends JPanel implements MouseMotionListener, MouseWheelListener, MouseListener, Observer {
-    private Graphics2D graphics2D;
-    private int startXOfWorkingArea;
-    private int startYOfWorkingArea;
-    private int selectedX;
-    private int selectedY;
-    private int necessaryWidth;
-    private int necessaryHeight;
+    private int xOffset, yOffset;
+    private int selectedX, selectedY;
+    private int necessaryWidth, necessaryHeight;
     private Image[] images;
     private MacroCommand lastMacroCommand;
+//    private Toolbox toolbox;
 
     public WorkingAreaPanel() {
+        selectedX = selectedY = -1;
         ModelManager.getInstance().registerObserver(this);
         images = getImages();
+
         computeNecessarySize();
         setNecessarySizeForComponent();
         addListeners();
+
+        setLayout(new BorderLayout());
+//        toolbox = new Toolbox();
+//        add(toolbox, BorderLayout.WEST);
     }
 
     private void addListeners() {
@@ -56,49 +59,50 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        graphics2D = (Graphics2D)g;
-        drawBackground();
-        drawWorkingArea();
+        Graphics2D graphics2D = (Graphics2D)g;
+        drawBackground(graphics2D);
+        drawWorkingArea(graphics2D);
+//        toolbox.repaint();
     }
 
-    private void drawWorkingArea() {
+    private void drawWorkingArea(Graphics2D graphics2D) {
         ModelManager modelManager = ModelManager.getInstance();
         final int tileSizeInPixels = modelManager.getTileSizeInPixels();
-        startXOfWorkingArea = (getWidth() - necessaryWidth) / 2;
-        startYOfWorkingArea = (getHeight() - necessaryHeight) / 2;
+        xOffset = (getWidth() - necessaryWidth) / 2;
+        yOffset = (getHeight() - necessaryHeight) / 2;
         graphics2D.setColor(new Color(12, 255, 0));
         for (int i = 0; i < modelManager.getMapWidth(); i++) {
             for (int j = 0; j < modelManager.getMapHeight(); j++) {
-                final int X_TO_DRAW = startXOfWorkingArea + i * tileSizeInPixels;
-                final int Y_TO_DRAW = startYOfWorkingArea + j * tileSizeInPixels;
+                final int X_TO_DRAW = xOffset + i * tileSizeInPixels;
+                final int Y_TO_DRAW = yOffset + j * tileSizeInPixels;
                 graphics2D.translate(X_TO_DRAW, Y_TO_DRAW);
                 final Image IMAGE_TO_DRAW = images[modelManager.getTileAt(i, j) - 1];
-                final double X_SIZE_MULTIPLIER = (tileSizeInPixels + 0.0)/ IMAGE_TO_DRAW.getWidth(this);
-                final double Y_SIZE_MULTIPLIER = (tileSizeInPixels + 0.0)/ IMAGE_TO_DRAW.getHeight(this);
+                final double X_SIZE_MULTIPLIER = (tileSizeInPixels + 0.0) / IMAGE_TO_DRAW.getWidth(this);
+                final double Y_SIZE_MULTIPLIER = (tileSizeInPixels + 0.0) / IMAGE_TO_DRAW.getHeight(this);
                 graphics2D.scale(X_SIZE_MULTIPLIER, Y_SIZE_MULTIPLIER);
                 graphics2D.drawImage(images[modelManager.getTileAt(i, j) - 1], null, null);
-                graphics2D.scale(1 / X_SIZE_MULTIPLIER, 1 / Y_SIZE_MULTIPLIER);
-           //     graphics2D.drawRect(0, 0, tileSizeInPixels, tileSizeInPixels);
+                graphics2D.scale(1.0 / X_SIZE_MULTIPLIER, 1.0 / Y_SIZE_MULTIPLIER);
+                //     graphics2D.drawRect(0, 0, tileSizeInPixels, tileSizeInPixels);
                 graphics2D.translate(-X_TO_DRAW, -Y_TO_DRAW);
             }
         }
 
-        drawSelectedTileBorder();
+        drawSelectedTileBorder(graphics2D);
     }
 
-    private void drawSelectedTileBorder() {
+    private void drawSelectedTileBorder(Graphics2D graphics2D) {
         final int tileSizeInPixels = ModelManager.getInstance().getTileSizeInPixels();
         if (selectedX >= 0 && selectedY >= 0) {
             graphics2D.setColor(Color.BLACK);
-            graphics2D.drawRect(startXOfWorkingArea + selectedX * tileSizeInPixels + 1,
-                    startYOfWorkingArea + selectedY * tileSizeInPixels + 1,
+            graphics2D.drawRect(xOffset + selectedX * tileSizeInPixels + 1,
+                    yOffset + selectedY * tileSizeInPixels + 1,
                     tileSizeInPixels - 2,
                     tileSizeInPixels - 2);
         }
     }
 
     private Image[] getImages() {
-        ArrayList<TileType> tileTypes = ModelManager.getInstance().getTileTypes();
+        ArrayList<TileType> tileTypes = ModelManager.getInstance().getAllTileTypes();
         Image[] images = new Image[tileTypes.size()];
         try {
             int i = 0;
@@ -111,50 +115,63 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
         return images;
     }
 
-    private void drawBackground() {
+    private void drawBackground(Graphics2D graphics2D) {
         graphics2D.setColor(Color.DARK_GRAY);
         graphics2D.fillRect(0, 0, getWidth(), getHeight());
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if ((e.getModifiers() & 16) == 16) {
-            ModelManager modelManager = ModelManager.getInstance();
-            final int tileSizeInPixels = modelManager.getTileSizeInPixels();
-            final int MOUSE_X = e.getX();
-            final int MOUSE_Y = e.getY();
-            if (coordinateBounds(MOUSE_X, MOUSE_Y)) {
-                selectedX = (MOUSE_X - startXOfWorkingArea - ((MOUSE_X - startXOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
-                selectedY = (MOUSE_Y - startYOfWorkingArea - ((MOUSE_Y - startYOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
-                lastMacroCommand.addCommand(new UpdateTileAtCommand(selectedX, selectedY));
-            }
-            else {
-                selectedX = -1;
-                selectedY = -1;
-            }
-            repaint();
-        }
+        handleMouseMoveAt(e.getX(), e.getY());
+        if (isLeftMousePressed(e.getModifiers()))
+            handleLeftMousePress();
     }
 
-    @Override
-    public void mouseMoved(MouseEvent e) {
+    private void handleLeftMousePress() {
+        ModelManager modelManager = ModelManager.getInstance();
+        if (selectedX != -1 && selectedY != -1 && modelManager.getTileAt(selectedX, selectedY) != modelManager.getCurrentSelectedMaterialID())
+            lastMacroCommand.addCommand(new UpdateTileAtCommand(selectedX, selectedY));
+    }
+
+    private boolean isLeftMousePressed(int modifiers) {
+        return (modifiers & 16) == 16;
+    }
+
+    private void handleMouseMoveAt(int xCoord, int yCoord) {
         final int tileSizeInPixels = ModelManager.getInstance().getTileSizeInPixels();
-        final int MOUSE_X = e.getX();
-        final int MOUSE_Y = e.getY();
-        if (coordinateBounds(MOUSE_X, MOUSE_Y)) {
-            selectedX = (MOUSE_X - startXOfWorkingArea - ((MOUSE_X - startXOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
-            selectedY = (MOUSE_Y - startYOfWorkingArea - ((MOUSE_Y - startYOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
+        final int workingAreaX = xCoord - xOffset;
+        final int workingAreaY = yCoord - yOffset;
+        final int oldSelectedX = selectedX;
+        final int oldSelectedY = selectedY;
+        if (coordinateBounds(xCoord, yCoord)) {
+            selectedX = (workingAreaX - (workingAreaX % tileSizeInPixels)) / tileSizeInPixels;
+            selectedY = (workingAreaY - (workingAreaY % tileSizeInPixels)) / tileSizeInPixels;
+            if (oldSelectedX != selectedX || oldSelectedY != selectedY) {
+                repaintTile(selectedX, selectedY);
+                repaintTile(oldSelectedX, oldSelectedY);
+            }
         }
         else {
             selectedX = -1;
             selectedY = -1;
+            if (oldSelectedX != selectedX || oldSelectedY != selectedY)
+                repaintTile(oldSelectedX, oldSelectedY);
         }
-        repaint();
+    }
+
+    private void repaintTile(int x, int y) {
+        final int tileSizeInPixels = ModelManager.getInstance().getTileSizeInPixels();
+        repaint(xOffset + x * tileSizeInPixels, yOffset + y * tileSizeInPixels, tileSizeInPixels, tileSizeInPixels);
     }
 
     private boolean coordinateBounds(int x, int y) {
-        return x > startXOfWorkingArea && x < startXOfWorkingArea + necessaryWidth
-                && y > startYOfWorkingArea && y < startYOfWorkingArea + necessaryHeight;
+        return x > xOffset && x < xOffset + necessaryWidth
+                && y > yOffset && y < yOffset + necessaryHeight;
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        handleMouseMoveAt(e.getX(), e.getY());
     }
 
     @Override
@@ -166,21 +183,7 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        ModelManager modelManager = ModelManager.getInstance();
-        final int tileSizeInPixels = modelManager.getTileSizeInPixels();
-        final int MOUSE_X = e.getX();
-        final int MOUSE_Y = e.getY();
-        if (coordinateBounds(MOUSE_X, MOUSE_Y)) {
-            selectedX = (MOUSE_X - startXOfWorkingArea - ((MOUSE_X - startXOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
-            selectedY = (MOUSE_Y - startYOfWorkingArea - ((MOUSE_Y - startYOfWorkingArea) % tileSizeInPixels)) / tileSizeInPixels;
-            lastMacroCommand.addCommand(new UpdateTileAtCommand(selectedX, selectedY));
-            modelManager.performCommand(lastMacroCommand);
-        }
-        else {
-            selectedX = -1;
-            selectedY = -1;
-        }
-        repaint();
+
     }
 
     @Override
@@ -191,8 +194,9 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        if (lastMacroCommand.isEmpty())
+            handleLeftMousePress();
         lastMacroCommand.perform();
-
     }
 
     @Override
@@ -207,12 +211,26 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
 
     @Override
     public void update(Observable o, Object arg) {
-        doUpdate();
+        if (arg != null) {
+            int [] args = (int[])arg;
+            doUpdate(args[0], args[1]);
+        }
+        else
+            doUpdate();
     }
 
     private void doUpdate() {
+        resizePanel();
+        repaint();
+    }
+
+    private void resizePanel() {
         computeNecessarySize();
         setNecessarySizeForComponent();
-        repaint();
+    }
+
+    private void doUpdate(int x, int y) {
+//        resizePanel();
+        repaintTile(x, y);
     }
 }

@@ -12,7 +12,7 @@ public class MainFrame extends JFrame {
     public final int SCREEN_HEIGHT;
 
     public static void main(String[] args) {
-        MainFrame mainFrame = new MainFrame();
+        MainFrameVer2 mainFrame = new MainFrameVer2();
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setVisible(true);
     }
@@ -30,9 +30,12 @@ public class MainFrame extends JFrame {
 
     private void prepareToolkitInternalFrame() {
         JInternalFrame toolkitInternalFrame = new ToolkitInternalFrame();
-        toolkitInternalFrame.reshape(1, 30, 170, 400);
+        toolkitInternalFrame.setLocation(1, 30);
+//        toolkitInternalFrame.setSize(new Dimension(50, 50));
+//        toolkitInternalFrame.reshape(1, 30, 170, 400);
         toolkitInternalFrame.setLayer(2);
         toolkitInternalFrame.setVisible(true);
+//        toolkitInternalFrame.pack();
         desktop.add(toolkitInternalFrame);
     }
 

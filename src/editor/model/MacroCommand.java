@@ -15,6 +15,10 @@ public class MacroCommand implements Command {
         c.perform();
     }
 
+    public boolean isEmpty() {
+        return commands.isEmpty();
+    }
+
     @Override
     public void perform() {
 

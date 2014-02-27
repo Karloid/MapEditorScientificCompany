@@ -1,8 +1,5 @@
 package editor.model;
 
-/**
- * Created by NOTADMIN on 25.02.14.
- */
 public class UpdateTileAtCommand implements Command{
     private int x;
     private int y;

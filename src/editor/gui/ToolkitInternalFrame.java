@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ToolkitInternalFrame extends JInternalFrame {
     private JPanel detailsPanel;
@@ -15,33 +16,35 @@ public class ToolkitInternalFrame extends JInternalFrame {
     public ToolkitInternalFrame() {
         super("Toolkit", true, true, false, true);
         setFrameIcon(null);
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Bum-Burum!"));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+//        panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Bum-Burum!"));
         ButtonGroup buttonGroup = new ButtonGroup();
-        ArrayList<TileType> basicTileTypes = ModelManager.getInstance().getBasicTileTypes();
+        List<TileType> basicTileTypes = ModelManager.getInstance().getBasicTileTypes();
         for (TileType t : basicTileTypes) {
             panel.add(getRegisteredRadioComponent(buttonGroup, t, true));
         }
         Box b = Box.createVerticalBox();
-        panel.setBackground(Color.GREEN);
 //        panel.setMaximumSize(panel.getPreferredSize());
-        b.add(panel);
+        add(panel);
+//        setMaximumSize(new Dimension(50, getMaximumSize().height));
+        setSize(new Dimension(50, 300));
+//        pack();
 //        panel.get
 //        b.add(Box.createVerticalGlue());
 
-        detailsPanel = new JPanel();
-        b.add(detailsPanel);
-        add(b);
-
-
-        rebuildDetailsPanel(null);
+//        detailsPanel = new JPanel();
+//        b.add(detailsPanel);
+//        add(b);
+//
+//
+//        rebuildDetailsPanel(null);
     }
 
     private void rebuildDetailsPanel(TileType tileType) {
         detailsPanel.removeAll();
         if (tileType != null) {
             ButtonGroup buttonGroup = new ButtonGroup();
-            ArrayList<TileType> relatedTileTypes = ModelManager.getInstance().getRelatedTileTypes(tileType);
+            List<TileType> relatedTileTypes = ModelManager.getInstance().getRelatedTileTypes(tileType);
             for (TileType t : relatedTileTypes) {
                 detailsPanel.add(getRegisteredRadioComponent(buttonGroup, t, false));
             }
@@ -66,7 +69,6 @@ public class ToolkitInternalFrame extends JInternalFrame {
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                radioButton.setSelected(true);
                 radioButton.doClick();
             }
         });
@@ -76,8 +78,8 @@ public class ToolkitInternalFrame extends JInternalFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ModelManager.getInstance().setCurrentSelectedMaterialID(tileType.getId());
-                if (flag)
-                    rebuildDetailsPanel(tileType);
+//                if (flag)
+//                    rebuildDetailsPanel(tileType);
             }
         });
         return box;

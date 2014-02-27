@@ -29,7 +29,7 @@ public class ModelManager {
         observers = new ArrayList<Observer>();
         commands = new ArrayList<Command>();
         prepareTiles();
-        currentSelectedMaterialID = 1;
+        currentSelectedMaterialID = 0;
         loadTiles(jsonFileName);
     }
 
@@ -41,6 +41,11 @@ public class ModelManager {
     private void fireModelChanged() {
         for (Observer o : observers)
             o.update(null, null);
+    }
+
+    private void fireModelChanged(int x, int y) {
+        for (Observer o : observers)
+            o.update(null, new int[] {x, y});
     }
 
     public static ModelManager createModelManagerTestInstance(String jsonFileName) {
@@ -98,10 +103,13 @@ public class ModelManager {
     }
 
     public void updateTileAt(int x, int y) {
-        tiles[x][y] = currentSelectedMaterialID;
+        if (currentSelectedMaterialID != 0) {
+            tiles[x][y] = currentSelectedMaterialID;
+            fireModelChanged(x, y);
+        }
     }
 
-    public ArrayList<TileType> getTileTypes() {
+    public ArrayList<TileType> getAllTileTypes() {
         return tileTypes;
     }
 
@@ -131,18 +139,18 @@ public class ModelManager {
         }
     }
 
-    public ArrayList<TileType> getBasicTileTypes() {
-        ArrayList<TileType> basicTileTypes = new ArrayList<TileType>();
-        for (TileType t : getTileTypes()) {
+    public List<TileType> getBasicTileTypes() {
+        List<TileType> basicTileTypes = new ArrayList<TileType>();
+        for (TileType t : getAllTileTypes()) {
             if (t.getTags().contains("COMMON"))
                 basicTileTypes.add(t);
         }
         return basicTileTypes;
     }
 
-    public ArrayList<TileType> getRelatedTileTypes(TileType tileType) {
-        ArrayList<TileType> relatedTileTypes = new ArrayList<TileType>();
-        for (TileType t : getTileTypes()) {
+    public List<TileType> getRelatedTileTypes(TileType tileType) {
+        List<TileType> relatedTileTypes = new ArrayList<TileType>();
+        for (TileType t : getAllTileTypes()) {
             for (String s : tileType.getTags()) {
                 if (!s.equals("COMMON") && t.getTags().contains(s)) {
                     relatedTileTypes.add(t);
@@ -151,6 +159,14 @@ public class ModelManager {
             }
         }
         return relatedTileTypes;
+    }
+
+    public List<TileType> getTileTypesWithTags(List<String> commonTags) {
+        ArrayList<TileType> tileTypesWithTags = new ArrayList<TileType>();
+        for (TileType tileType : getAllTileTypes())
+            if (tileType.getTags().containsAll(commonTags))
+                tileTypesWithTags.add(tileType);
+        return tileTypesWithTags;
     }
 
     public void openMapFromJson(String fileName) {
@@ -196,7 +212,7 @@ public class ModelManager {
         fireModelChanged();
     }
 
-    public void redoLastCommand() {
+    public void undoLastCommand() {
         if (commands.size() > 0) {
             commands.get(commands.size() - 1).undo();
             commands.remove(commands.size() - 1);
