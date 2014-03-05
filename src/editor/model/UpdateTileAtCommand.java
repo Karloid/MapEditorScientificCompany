@@ -4,24 +4,22 @@ public class UpdateTileAtCommand implements Command{
     private int x;
     private int y;
     private int oldMaterial;
+    private int newMaterial;
 
-    public UpdateTileAtCommand(int _x, int _y) {
+    public UpdateTileAtCommand(int _x, int _y, int _newMaterial) {
         x = _x;
         y = _y;
+        newMaterial = _newMaterial;
     }
 
     @Override
     public void perform() {
         oldMaterial = ModelManager.getInstance().getTileAt(x, y);
-        ModelManager.getInstance().updateTileAt(x, y);
+        ModelManager.getInstance().updateTileAtWith(x, y, newMaterial);
     }
 
     @Override
     public void undo() {
-        ModelManager modelManager = ModelManager.getInstance();
-        int lastMaterial = modelManager.getCurrentSelectedMaterialID();
-        modelManager.setCurrentSelectedMaterialID(oldMaterial);
-        modelManager.updateTileAt(x, y);
-        modelManager.setCurrentSelectedMaterialID(lastMaterial);
+        ModelManager.getInstance().updateTileAtWith(x, y, oldMaterial);
     }
 }

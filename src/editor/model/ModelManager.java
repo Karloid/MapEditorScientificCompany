@@ -13,7 +13,10 @@ public class ModelManager {
     private int tileSizeInPixels = 32;
     private int[][] tiles;
     private int currentSelectedMaterialID;
+    private int primaryMaterialID, secondaryMaterialID;
+    private boolean isPrimaryMaterialSelected;
     private ArrayList<TileType> tileTypes;
+    private Map<Integer, String> tileIdToTileTextureMap;
     private int mapWidth;
     private int mapHeight;
     private List<Observer> observers;
@@ -28,9 +31,11 @@ public class ModelManager {
     private ModelManager(String jsonFileName) {
         observers = new ArrayList<Observer>();
         commands = new ArrayList<Command>();
-        prepareTiles();
+        tileIdToTileTextureMap = new HashMap<Integer, String>();
         currentSelectedMaterialID = 0;
-        loadTiles(jsonFileName);
+        isPrimaryMaterialSelected = true;
+        loadTileTypes(jsonFileName);
+        initTilesWithDefaultValues();
     }
 
     public void registerObserver(Observer observer) {
@@ -45,25 +50,39 @@ public class ModelManager {
 
     private void fireModelChanged(int x, int y) {
         for (Observer o : observers)
-            o.update(null, new int[] {x, y});
+            o.update(null, new ModelManagerTileUpdateInfo(x, y));
+    }
+
+    private void fireMaterialChanged(boolean isPrimaryMaterialChanged) {
+        for (Observer o : observers)
+            o.update(null, new ModelManagerMaterialUpdateInfo(isPrimaryMaterialChanged));
     }
 
     public static ModelManager createModelManagerTestInstance(String jsonFileName) {
         return new ModelManager(jsonFileName);
     }
 
-    private void loadTiles(String jsonFileName) {
+    public String getTextureForTileID(int tileID) {
+        return tileIdToTileTextureMap.get(tileID);
+    }
+
+    private void loadTileTypes(String jsonFileName) {
         tileTypes = new ArrayList<TileType>();
         String jsonString = Utils.readFile(jsonFileName);
         Map root = new Gson().fromJson(jsonString, Map.class);
         List<Map<String, Object>> tiles = (List<Map<String, Object>>) root.get("tiles");
         for (Map<String, Object> tile : tiles) {
-            tileTypes.add(new TileType((int) Math.round((Double) tile.get("id")),
-                    (String) tile.get("name"), (String) tile.get("texture"), (Collection<String>) tile.get("tags")));
+            TileType t = new TileType((int) Math.round((Double) tile.get("id")),
+                    (String) tile.get("name"), (String) tile.get("texture"), (Collection<String>) tile.get("tags"));
+            tileTypes.add(t);
+            tileIdToTileTextureMap.put(t.getId(), t.getTexture());
         }
+        if (tileTypes.isEmpty())
+            throw new RuntimeException();
+        primaryMaterialID = secondaryMaterialID = tileTypes.get(0).getId();
     }
 
-    private void prepareTiles() {
+    private void initTilesWithDefaultValues() {
         mapWidth = MAP_DEFAULT_WIDTH_IN_TILES;
         mapHeight = MAP_DEFAULT_HEIGHT_IN_TILES;
         tiles = new int[getMapWidth()][getMapHeight()];
@@ -103,8 +122,16 @@ public class ModelManager {
     }
 
     public void updateTileAt(int x, int y) {
+        int currentSelectedMaterialID = getCurrentSelectedMaterialID();
         if (currentSelectedMaterialID != 0) {
             tiles[x][y] = currentSelectedMaterialID;
+            fireModelChanged(x, y);
+        }
+    }
+
+    public void updateTileAtWith(int x, int y, int materialID) {
+        if (materialID != 0) {
+            tiles[x][y] = materialID;
             fireModelChanged(x, y);
         }
     }
@@ -118,7 +145,9 @@ public class ModelManager {
     }
 
     public int getCurrentSelectedMaterialID() {
-        return currentSelectedMaterialID;
+        if (isPrimaryMaterialSelected)
+            return primaryMaterialID;
+        return secondaryMaterialID;
     }
 
     public void saveMapAsJson(File file) {
@@ -163,9 +192,11 @@ public class ModelManager {
 
     public List<TileType> getTileTypesWithTags(List<String> commonTags) {
         ArrayList<TileType> tileTypesWithTags = new ArrayList<TileType>();
-        for (TileType tileType : getAllTileTypes())
-            if (tileType.getTags().containsAll(commonTags))
-                tileTypesWithTags.add(tileType);
+        if (!commonTags.isEmpty()) {
+            for (TileType tileType : getAllTileTypes())
+                if (tileType.getTags().containsAll(commonTags))
+                    tileTypesWithTags.add(tileType);
+        }
         return tileTypesWithTags;
     }
 
@@ -219,4 +250,64 @@ public class ModelManager {
             fireModelChanged();
         }
     }
+
+    public void setPrimaryMaterialID(int _primaryMaterialID) {
+        primaryMaterialID = _primaryMaterialID;
+        fireMaterialChanged(true);
+    }
+
+    public void setSecondaryMaterialID(int _secondaryMaterialID) {
+        secondaryMaterialID = _secondaryMaterialID;
+        fireMaterialChanged(false);
+    }
+
+    public void setPrimaryMaterialSelected(boolean _isPrimaryMaterialSelected) {
+        isPrimaryMaterialSelected = _isPrimaryMaterialSelected;
+    }
+
+    public int getPrimaryMaterialID() {
+        return primaryMaterialID;
+    }
+
+    public int getSecondaryMaterialID() {
+        return secondaryMaterialID;
+    }
+
+    public void swapMaterials() {
+        int tmp = secondaryMaterialID;
+        setSecondaryMaterialID(primaryMaterialID);
+        setPrimaryMaterialID(tmp);
+    }
+
+    public static class ModelManagerTileUpdateInfo {
+        private int tileX;
+        private int tileY;
+
+        public ModelManagerTileUpdateInfo(int _tileX, int _tileY) {
+            tileX = _tileX;
+            tileY = _tileY;
+        }
+
+        public int getTileX() {
+            return tileX;
+        }
+
+        public int getTileY() {
+            return tileY;
+        }
+    }
+
+    public static class ModelManagerMaterialUpdateInfo {
+        private boolean isPrimaryMaterialChanged;
+
+        public ModelManagerMaterialUpdateInfo(boolean _isPrimaryMaterialChanged) {
+            isPrimaryMaterialChanged = _isPrimaryMaterialChanged;
+        }
+
+        public boolean isPrimaryMaterialChanged() {
+            return isPrimaryMaterialChanged;
+        }
+    }
+
+
 }

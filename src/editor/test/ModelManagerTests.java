@@ -2,9 +2,12 @@ package editor.test;
 
 import editor.model.ModelManager;
 import editor.model.TileType;
+import editor.model.TileTypeComponent;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.junit.Test;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,4 +60,10 @@ public class ModelManagerTests extends TestCase {
         Assert.assertEquals("[[1,2][8,10][9,3]]", modelManager.getMapStringRepresentation());
     }
 
+    public static void test_noTileTypesException() {
+        try {
+            ModelManager.createModelManagerTestInstance("test_resources/tileTypes_empty.json");
+            fail();
+        } catch (RuntimeException e) { }
+    }
 }
