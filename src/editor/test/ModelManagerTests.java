@@ -2,9 +2,12 @@ package editor.test;
 
 import editor.model.ModelManager;
 import editor.model.TileType;
+import editor.model.TileTypeComponent;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.junit.Test;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
