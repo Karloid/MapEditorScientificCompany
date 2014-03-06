@@ -14,15 +14,47 @@ public class EditorMenuBar extends JMenuBar {
 
     public EditorMenuBar(Component _parent) {
         parent = _parent;
-        JMenu fileMenu = new JMenu("Map");
-        add(fileMenu);
-        fileMenu.add(createSaveMenuItem());
-        fileMenu.add(createOpenMenuItem());
-        fileMenu.addSeparator();
-        fileMenu.add(createQuitMenuItem());
+        JMenu mapMenu = new JMenu("Map");
+        add(mapMenu);
+        mapMenu.add(createClearItem());
+        mapMenu.addSeparator();
+        mapMenu.add(createSettingsItem());
+        mapMenu.addSeparator();
+        mapMenu.add(createSaveMenuItem());
+        mapMenu.add(createOpenMenuItem());
+        mapMenu.addSeparator();
+        mapMenu.add(createQuitMenuItem());
         JMenu editMenu = new JMenu("Edit");
         add(editMenu);
         editMenu.add(createUndoMenuItem());
+    }
+
+    private JMenuItem createClearItem() {
+        JMenuItem settingsMenuItem = new JMenuItem("Clear");
+        settingsMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
+        settingsMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ModelManager modelMgr = ModelManager.getInstance();
+                modelMgr.performCommand(modelMgr.new ClearMapCommand());
+            }
+        });
+        return settingsMenuItem;
+    }
+
+    private JMenuItem createSettingsItem() {
+        JMenuItem settingsMenuItem = new JMenuItem("Settings...");
+        settingsMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+        settingsMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ModelManager modelMgr = ModelManager.getInstance();
+                MapSettingsPanel mapSettingsPanel = new MapSettingsPanel(modelMgr.getMapWidth(), modelMgr.getMapHeight());
+                if (mapSettingsPanel.showDialog(parent, "Settings"))
+                    modelMgr.performCommand(modelMgr.new UpdateMapSizeCommand(mapSettingsPanel.getMapWidth(), mapSettingsPanel.getMapHeight()));
+            }
+        });
+        return settingsMenuItem;
     }
 
     private JMenuItem createQuitMenuItem() {
@@ -36,7 +68,6 @@ public class EditorMenuBar extends JMenuBar {
         });
         return quitMenuItem;
     }
-
 
     private JMenuItem createSaveMenuItem() {
         JMenuItem saveMenuItem = new JMenuItem("Save...");

@@ -1,0 +1,11 @@
+    {
+     "tiles" : [
+    			{"id" : 1, "name" :  "GRASS1", 				      "texture" : "grass1.png", "tags" :["GRASS", "COMMON"]},
+    			{"id" : 2, "name" :  "GRASS2", 				      "texture" : "grass2.png", "tags" :["GRASS"]},
+    			{"id" : 3, "name" :  "DIRT1", 				      "texture" : "dirt1.png", "tags" :["DIRT", "COMMON"]},
+    			{"id" : 4, "name" :  "DIRT2", 				      "texture" : "dirt2.png", "tags" :["DIRT"]}
+    			 ]
+    }
+
+
+

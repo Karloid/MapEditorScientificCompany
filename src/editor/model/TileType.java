@@ -36,4 +36,8 @@ public class TileType {
     public String toString() {
         return "[id: " + id + ", name: " + name + ", texture: " + texture + " ]" + tags.toString();
     }
+
+    public String tooltipText() {
+        return getName() + " (ID: " + getId() + "; " + getTexture() + ")";
+    }
 }

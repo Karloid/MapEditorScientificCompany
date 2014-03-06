@@ -1,6 +1,7 @@
 package editor.model;
 
 import com.google.gson.Gson;
+import editor.model.command.Command;
 import editor.service.Utils;
 
 import java.io.File;
@@ -12,8 +13,9 @@ import java.util.*;
 public class ModelManager {
     private int tileSizeInPixels = 32;
     private int[][] tiles;
-    private int currentSelectedMaterialID;
+    private int primaryMaterialID, secondaryMaterialID;
     private ArrayList<TileType> tileTypes;
+    private Map<Integer, String> tileIdToTileTextureMap;
     private int mapWidth;
     private int mapHeight;
     private List<Observer> observers;
@@ -28,9 +30,20 @@ public class ModelManager {
     private ModelManager(String jsonFileName) {
         observers = new ArrayList<Observer>();
         commands = new ArrayList<Command>();
-        prepareTiles();
-        currentSelectedMaterialID = 0;
-        loadTiles(jsonFileName);
+        tileIdToTileTextureMap = new HashMap<Integer, String>();
+        loadTileTypes(jsonFileName);
+        initTilesWithDefaultValues();
+    }
+
+    public void setMapSize(int x, int y) {
+        int[][] newTiles = createInitiatedByDefaultTiles(x, y);
+        for (int i = 0; i < Math.min(x, getMapWidth()); i++)
+            for (int j = 0; j < Math.min(y, getMapHeight()); j++)
+                newTiles[i][j] = tiles[i][j];
+        mapWidth = x;
+        mapHeight = y;
+        tiles = newTiles;
+        fireAllMapChanged();
     }
 
     public void registerObserver(Observer observer) {
@@ -38,41 +51,67 @@ public class ModelManager {
             observers.add(observer);
     }
 
-    private void fireModelChanged() {
+    private void fireAllMapChanged() {
         for (Observer o : observers)
-            o.update(null, null);
+            o.update(null, new ModelManagerUpdateInfo(ModelManagerUpdateType.TOTAL_MAP_UPDATE, null));
     }
 
-    private void fireModelChanged(int x, int y) {
+    private void fireOneTileChanged(int x, int y) {
         for (Observer o : observers)
-            o.update(null, new int[] {x, y});
+            o.update(null, new ModelManagerUpdateInfo(ModelManagerUpdateType.TILE_UPDATE, new int[] {x, y}));
+    }
+
+    private void fireMaterialChanged() {
+        for (Observer o : observers)
+            o.update(null, new ModelManagerUpdateInfo(ModelManagerUpdateType.MATERIAL_UPDATE, null));
     }
 
     public static ModelManager createModelManagerTestInstance(String jsonFileName) {
         return new ModelManager(jsonFileName);
     }
 
-    private void loadTiles(String jsonFileName) {
+    public String getTextureForTileID(int tileID) {
+        return tileIdToTileTextureMap.get(tileID);
+    }
+
+    private void loadTileTypes(String jsonFileName) {
         tileTypes = new ArrayList<TileType>();
         String jsonString = Utils.readFile(jsonFileName);
         Map root = new Gson().fromJson(jsonString, Map.class);
         List<Map<String, Object>> tiles = (List<Map<String, Object>>) root.get("tiles");
         for (Map<String, Object> tile : tiles) {
-            tileTypes.add(new TileType((int) Math.round((Double) tile.get("id")),
-                    (String) tile.get("name"), (String) tile.get("texture"), (Collection<String>) tile.get("tags")));
+            TileType t = new TileType((int) Math.round((Double) tile.get("id")),
+                    (String) tile.get("name"), (String) tile.get("texture"), (Collection<String>) tile.get("tags"));
+            tileTypes.add(t);
+            tileIdToTileTextureMap.put(t.getId(), t.getTexture());
         }
+        if (tileTypes.isEmpty())
+            throw new RuntimeException();
+        primaryMaterialID = secondaryMaterialID = tileTypes.get(0).getId();
     }
 
-    private void prepareTiles() {
+    private static int[][] createInitiatedByDefaultTiles(int x, int y) {
+        int[][] newTiles = new int[x][y];
+        for (int i = 0; i < x; i++)
+            for (int j = 0; j < y; j++)
+                if (Math.random() > 0.5f)
+                    newTiles[i][j] = 1;//TileTypes.GRASS1;
+                else
+                    newTiles[i][j] = 2;//TileTypes.GRASS2;
+        return newTiles;
+    }
+
+    private void initTilesWithDefaultValues() {
         mapWidth = MAP_DEFAULT_WIDTH_IN_TILES;
         mapHeight = MAP_DEFAULT_HEIGHT_IN_TILES;
-        tiles = new int[getMapWidth()][getMapHeight()];
-        for (int i = 0; i < getMapWidth(); i++)
-            for (int j = 0; j < getMapHeight(); j++)
-                if (Math.random() > 0.5f)
-                    tiles[i][j] = 1;//TileTypes.GRASS1;
-                else
-                    tiles[i][j] = 2;//TileTypes.GRASS2;
+        tiles = createInitiatedByDefaultTiles(getMapWidth(), getMapHeight());
+//        tiles = new int[getMapWidth()][getMapHeight()];
+//        for (int i = 0; i < getMapWidth(); i++)
+//            for (int j = 0; j < getMapHeight(); j++)
+//                if (Math.random() > 0.5f)
+//                    tiles[i][j] = 1;//TileTypes.GRASS1;
+//                else
+//                    tiles[i][j] = 2;//TileTypes.GRASS2;
     }
 
     public static ModelManager getInstance() {
@@ -102,23 +141,8 @@ public class ModelManager {
         return tiles[x][y];
     }
 
-    public void updateTileAt(int x, int y) {
-        if (currentSelectedMaterialID != 0) {
-            tiles[x][y] = currentSelectedMaterialID;
-            fireModelChanged(x, y);
-        }
-    }
-
     public ArrayList<TileType> getAllTileTypes() {
         return tileTypes;
-    }
-
-    public void setCurrentSelectedMaterialID(int newID) {
-        currentSelectedMaterialID = newID;
-    }
-
-    public int getCurrentSelectedMaterialID() {
-        return currentSelectedMaterialID;
     }
 
     public void saveMapAsJson(File file) {
@@ -163,9 +187,11 @@ public class ModelManager {
 
     public List<TileType> getTileTypesWithTags(List<String> commonTags) {
         ArrayList<TileType> tileTypesWithTags = new ArrayList<TileType>();
-        for (TileType tileType : getAllTileTypes())
-            if (tileType.getTags().containsAll(commonTags))
-                tileTypesWithTags.add(tileType);
+        if (!commonTags.isEmpty()) {
+            for (TileType tileType : getAllTileTypes())
+                if (tileType.getTags().containsAll(commonTags))
+                    tileTypesWithTags.add(tileType);
+        }
         return tileTypesWithTags;
     }
 
@@ -179,7 +205,7 @@ public class ModelManager {
         for (int i = 0; i < s.size(); i++)
             for (int j = 0; j < s.get(i).size(); j++)
                 tiles[i][j] = s.get(i).get(j).intValue();
-        fireModelChanged();
+        fireAllMapChanged();
     }
 
     public int getMapWidth() {
@@ -209,14 +235,133 @@ public class ModelManager {
     public void performCommand(Command c) {
         c.perform();
         commands.add(c);
-        fireModelChanged();
+        fireAllMapChanged();
     }
 
     public void undoLastCommand() {
         if (commands.size() > 0) {
             commands.get(commands.size() - 1).undo();
             commands.remove(commands.size() - 1);
-            fireModelChanged();
+            fireAllMapChanged();
+        }
+    }
+
+    public void setPrimaryMaterialID(int _primaryMaterialID) {
+        primaryMaterialID = _primaryMaterialID;
+        fireMaterialChanged();
+    }
+
+    public void setSecondaryMaterialID(int _secondaryMaterialID) {
+        secondaryMaterialID = _secondaryMaterialID;
+        fireMaterialChanged();
+    }
+
+    public int getPrimaryMaterialID() {
+        return primaryMaterialID;
+    }
+
+    public int getSecondaryMaterialID() {
+        return secondaryMaterialID;
+    }
+
+    public void swapMaterials() {
+        int tmp = secondaryMaterialID;
+        setSecondaryMaterialID(primaryMaterialID);
+        setPrimaryMaterialID(tmp);
+    }
+
+    public static enum ModelManagerUpdateType {MATERIAL_UPDATE, TILE_UPDATE, TOTAL_MAP_UPDATE};
+
+    public static class ModelManagerUpdateInfo {
+        private ModelManagerUpdateType updateType;
+        private Object arguments;
+
+        public ModelManagerUpdateInfo(ModelManagerUpdateType _updateType, Object _args) {
+            updateType = _updateType;
+            arguments = _args;
+        }
+
+        public ModelManagerUpdateType getUpdateType() {
+            return updateType;
+        }
+
+        public Object getArguments() {
+            return arguments;
+        }
+    }
+
+    public class UpdateTileAtCommand implements Command {
+
+        private int x, y;
+        private int oldMaterial, newMaterial;
+        public UpdateTileAtCommand(int _x, int _y, int _newMaterial) {
+            x = _x;
+            y = _y;
+            newMaterial = _newMaterial;
+        }
+
+        @Override
+        public void perform() {
+            oldMaterial = ModelManager.this.tiles[x][y];
+            updateTileAtWith(x, y, newMaterial);
+        }
+
+        @Override
+        public void undo() {
+            updateTileAtWith(x, y, oldMaterial);
+        }
+
+        private void updateTileAtWith(int x, int y, int materialID) {
+            if (materialID != 0) {
+                ModelManager.this.tiles[x][y] = materialID;
+                ModelManager.this.fireOneTileChanged(x, y);
+            }
+        }
+
+    }
+    public class UpdateMapSizeCommand implements Command {
+        private int newMapWidth, newMapHeight;
+        private int oldMapWidth, oldMapHeight;
+        private int[][] oldTiles;
+
+        public UpdateMapSizeCommand(int _width, int _height) {
+            newMapWidth = _width;
+            newMapHeight = _height;
+        }
+
+        @Override
+        public void perform() {
+            oldMapWidth = ModelManager.this.mapWidth;
+            oldMapHeight = ModelManager.this.mapHeight;
+            oldTiles = ModelManager.this.tiles;
+            ModelManager.this.setMapSize(newMapWidth, newMapHeight);
+        }
+
+        @Override
+        public void undo() {
+            ModelManager.this.setMapSize(oldMapWidth, oldMapHeight);
+            ModelManager.this.tiles = oldTiles;
+            ModelManager.this.fireAllMapChanged();
+        }
+
+    }
+
+    public class ClearMapCommand implements Command {
+        private int[][] oldTiles;
+
+        public ClearMapCommand() { }
+
+        @Override
+        public void perform() {
+            oldTiles = ModelManager.this.tiles;
+            instance.tiles = ModelManager.createInitiatedByDefaultTiles(instance.mapWidth, instance.mapHeight);
+            instance.fireAllMapChanged();
+        }
+
+        @Override
+        public void undo() {
+            instance.tiles = oldTiles;
+            instance.fireAllMapChanged();
         }
     }
 }

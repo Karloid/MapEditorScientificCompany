@@ -57,4 +57,10 @@ public class ModelManagerTests extends TestCase {
         Assert.assertEquals("[[1,2][8,10][9,3]]", modelManager.getMapStringRepresentation());
     }
 
+    public static void test_noTileTypesException() {
+        try {
+            ModelManager.createModelManagerTestInstance("test_resources/tileTypes_empty.json");
+            fail();
+        } catch (RuntimeException e) { }
+    }
 }
