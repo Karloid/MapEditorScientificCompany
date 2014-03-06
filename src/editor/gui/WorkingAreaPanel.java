@@ -1,6 +1,6 @@
 package editor.gui;
 
-import editor.model.command.MacroCommand;
+import editor.model.MacroCommand;
 import editor.model.ModelManager;
 import editor.model.TileType;
 
@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -95,12 +96,15 @@ public class WorkingAreaPanel extends JPanel implements MouseMotionListener, Mou
     }
 
     private Image[] getImages() {
-        ArrayList<TileType> tileTypes = ModelManager.getInstance().getAllTileTypes();
-        Image[] images = new Image[tileTypes.size()];
+        ModelManager mgr = ModelManager.getInstance();
+        Image[] images = new Image[mgr.getTileTypeCount()];
         try {
             int i = 0;
-            for (TileType t : tileTypes)
+            Iterator<TileType> iterator = mgr.getIteratorOfAllTileTypes();
+            while (iterator.hasNext()) {
+                TileType t = iterator.next();
                 images[i++] = ImageIO.read(new File(ModelManager.IMAGES_DIR + t.getTexture()));
+            }
         }
         catch (IOException e) {
             e.printStackTrace();

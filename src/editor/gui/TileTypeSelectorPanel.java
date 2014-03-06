@@ -49,6 +49,7 @@ public class TileTypeSelectorPanel extends JPanel {
     private static JLabel createTileTypeSelector(TileType t) {
         ImageIcon imageIcon = new ImageIcon(ModelManager.IMAGES_DIR + t.getTexture());
         JLabel selector = new JLabel(imageIcon);
+        selector.setToolTipText(t.tooltipText());
         selector.setPreferredSize(new Dimension(imageIcon.getIconWidth() + 4, imageIcon.getIconHeight() + 4));
         TileTypeSelectorMouseListener listener = new TileTypeSelectorMouseListener(t.getId(), selector);
         selector.addMouseListener(listener);

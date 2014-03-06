@@ -22,7 +22,8 @@ public class SelectedTileTypePanel extends JPanel implements Observer {
     private final static int WIDTH = 4;
 
     public SelectedTileTypePanel() {
-        final int initialMaterialID = ModelManager.getInstance().getAllTileTypes().get(0).getId();
+        final ModelManager mgr = ModelManager.getInstance();
+        final int initialMaterialID = mgr.getIteratorOfAllTileTypes().next().getId();
         primaryMaterialID = secondaryMaterialID = initialMaterialID;
         primaryTileTypeComponent = new JLabel();
         secondaryTileTypeComponent = new JLabel();
@@ -33,7 +34,7 @@ public class SelectedTileTypePanel extends JPanel implements Observer {
         swapButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ModelManager.getInstance().swapMaterials();
+                mgr.swapMaterials();
             }
         });
         swapButton.registerKeyboardAction(new ActionListener() {
@@ -49,6 +50,7 @@ public class SelectedTileTypePanel extends JPanel implements Observer {
     }
 
     private void rebuildUI() {
+        final ModelManager mgr = ModelManager.getInstance();
         removeAll();
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 2;
@@ -56,7 +58,7 @@ public class SelectedTileTypePanel extends JPanel implements Observer {
         gbc.gridx = 2;
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 1, 1);
-        ImageIcon secondaryIcon = new ImageIcon(ModelManager.IMAGES_DIR + ModelManager.getInstance().getTextureForTileID(secondaryMaterialID));
+        ImageIcon secondaryIcon = new ImageIcon(ModelManager.IMAGES_DIR + mgr.getTextureForTileID(secondaryMaterialID));
         secondaryTileTypeComponent.setIcon(secondaryIcon);
         secondaryTileTypeComponent.setPreferredSize(new Dimension(secondaryIcon.getIconWidth(), secondaryIcon.getIconHeight()));
         add(secondaryTileTypeComponent, gbc);
@@ -64,7 +66,7 @@ public class SelectedTileTypePanel extends JPanel implements Observer {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 0, 0);
-        ImageIcon primaryIcon = new ImageIcon(ModelManager.IMAGES_DIR + ModelManager.getInstance().getTextureForTileID(primaryMaterialID));
+        ImageIcon primaryIcon = new ImageIcon(ModelManager.IMAGES_DIR + mgr.getTextureForTileID(primaryMaterialID));
         primaryTileTypeComponent.setIcon(primaryIcon);
         primaryTileTypeComponent.setPreferredSize(new Dimension(primaryIcon.getIconWidth(), primaryIcon.getIconHeight()));
         add(primaryTileTypeComponent, gbc);

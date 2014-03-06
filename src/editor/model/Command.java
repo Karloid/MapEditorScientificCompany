@@ -1,4 +1,4 @@
-package editor.model.command;
+package editor.model;
 
 public interface Command {
     public void perform();

@@ -1,4 +1,6 @@
-package editor.model.command;
+package editor.model;
+
+import editor.model.Command;
 
 import java.util.ArrayList;
 import java.util.List;

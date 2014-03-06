@@ -14,6 +14,18 @@ public class TileTypeComponent extends Box {
     private JButton button;
     private boolean isSelected;
 
+    private TileTypeComponent(TileType _tileType) {
+        super(BoxLayout.X_AXIS);
+        tileType = _tileType;
+        button = new JButton();
+        ImageIcon icon = new ImageIcon(ModelManager.IMAGES_DIR + tileType.getTexture());
+        button.setIcon(icon);
+        button.setPreferredSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
+        button.setToolTipText(tileType.tooltipText());
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+    }
+
     public static TileTypeComponent createTileTypeComponentWithCheckBox(TileType _tileType, final JCheckBox _checkBox) {
         final TileTypeComponent component = new TileTypeComponent(_tileType);
 
@@ -39,18 +51,6 @@ public class TileTypeComponent extends Box {
     public boolean isSelected() {
         actionListener.actionPerformed(null);
         return isSelected;
-    }
-
-    private TileTypeComponent(TileType _tileType) {
-        super(BoxLayout.X_AXIS);
-        tileType = _tileType;
-        button = new JButton();
-        ImageIcon icon = new ImageIcon(ModelManager.IMAGES_DIR + tileType.getTexture());
-        button.setIcon(icon);
-        button.setPreferredSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
-        button.setToolTipText(tileType.tooltipText());
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
     }
 
     public TileType getTileType() {
