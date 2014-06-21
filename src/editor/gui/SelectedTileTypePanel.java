@@ -2,9 +2,13 @@ package editor.gui;
 
 import editor.model.ModelManager;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -58,7 +62,15 @@ public class SelectedTileTypePanel extends JPanel implements Observer {
         gbc.gridx = 2;
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 1, 1);
-        ImageIcon secondaryIcon = new ImageIcon(ModelManager.IMAGES_DIR + mgr.getTextureForTileID(secondaryMaterialID));
+        ImageIcon secondaryIcon = null;
+        try {
+            BufferedImage bi = new BufferedImage(ModelManager.TOOL_IMAGE_ICON_SIZE, ModelManager.TOOL_IMAGE_ICON_SIZE, BufferedImage.TYPE_INT_ARGB);
+            bi.getGraphics().drawImage(ImageIO.read(new File(ModelManager.getInstance().getImageDirectoryName() + File.separator + mgr.getTextureForTileID(secondaryMaterialID))), 0, 0, ModelManager.TOOL_IMAGE_ICON_SIZE, ModelManager.TOOL_IMAGE_ICON_SIZE, null);
+            secondaryIcon = new ImageIcon(bi);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
         secondaryTileTypeComponent.setIcon(secondaryIcon);
         secondaryTileTypeComponent.setPreferredSize(new Dimension(secondaryIcon.getIconWidth(), secondaryIcon.getIconHeight()));
         add(secondaryTileTypeComponent, gbc);
@@ -66,7 +78,15 @@ public class SelectedTileTypePanel extends JPanel implements Observer {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 0, 0);
-        ImageIcon primaryIcon = new ImageIcon(ModelManager.IMAGES_DIR + mgr.getTextureForTileID(primaryMaterialID));
+        ImageIcon primaryIcon = null;
+        try {
+            BufferedImage bi = new BufferedImage(ModelManager.TOOL_IMAGE_ICON_SIZE, ModelManager.TOOL_IMAGE_ICON_SIZE, BufferedImage.TYPE_INT_ARGB);
+            bi.getGraphics().drawImage(ImageIO.read(new File(ModelManager.getInstance().getImageDirectoryName() + File.separator + mgr.getTextureForTileID(primaryMaterialID))), 0, 0, ModelManager.TOOL_IMAGE_ICON_SIZE, ModelManager.TOOL_IMAGE_ICON_SIZE, null);
+            primaryIcon = new ImageIcon(bi);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
         primaryTileTypeComponent.setIcon(primaryIcon);
         primaryTileTypeComponent.setPreferredSize(new Dimension(primaryIcon.getIconWidth(), primaryIcon.getIconHeight()));
         add(primaryTileTypeComponent, gbc);

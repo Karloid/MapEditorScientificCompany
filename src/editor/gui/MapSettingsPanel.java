@@ -11,7 +11,6 @@ public class MapSettingsPanel extends JPanel {
     private JTextField mapWidthTextField;
     private JTextField mapHeightTextField;
     private JButton okButton;
-    private JButton cancelButton;
     private JDialog dialog;
 
     private final static int LEFT_BORDER_INSET = 7;
@@ -57,15 +56,16 @@ public class MapSettingsPanel extends JPanel {
                 dialog.setVisible(false);
             }
         });
-        cancelButton = new JButton("Cancel");
+        panel.add(okButton, gbc);
+
+
+        JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dialog.setVisible(false);
             }
         });
-
-        panel.add(okButton, gbc);
         gbc.insets = new Insets(VERTICAL_COMPONENT_INSET, HORIZONTAL_COMPONENT_INSET, BOTTOM_BORDER_INSET, RIGHT_BORDER_INSET);
         gbc.gridx++;
         panel.add(cancelButton, gbc);

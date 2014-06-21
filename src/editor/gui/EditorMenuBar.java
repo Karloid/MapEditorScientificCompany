@@ -1,8 +1,12 @@
 package editor.gui;
 
+import editor.model.CommandHandler;
+import editor.model.Configurable;
 import editor.model.ModelManager;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,6 +16,8 @@ import java.io.File;
 
 public class EditorMenuBar extends JMenuBar {
     private Component parent;
+    private JMenuItem undoItem;
+    private JCheckBoxMenuItem smartModeCheckBox;
 
     public EditorMenuBar(Component _parent) {
         parent = _parent;
@@ -28,7 +34,46 @@ public class EditorMenuBar extends JMenuBar {
         mapMenu.add(createQuitMenuItem());
         JMenu editMenu = new JMenu("Edit");
         add(editMenu);
-        editMenu.add(createUndoMenuItem());
+        undoItem = createUndoMenuItem();
+        checkForCommandListChangesAndUpdate(ModelManager.getInstance());
+        editMenu.add(undoItem);
+        JMenu configMenu = new JMenu("Configuration");
+        add(configMenu);
+        smartModeCheckBox = createSmartModeCheckBoxItem();
+        configMenu.add(smartModeCheckBox);
+        configMenu.addSeparator();
+        Configurable configurable = ModelManager.getInstance();
+        ButtonGroup buttonGroup = new ButtonGroup();
+        for (int i = 0; i < configurable.getConfigCount(); i++) {
+            final String configurationName = configurable.getConfigAt(i);
+            JRadioButtonMenuItem radioButtonMenuItem = new JRadioButtonMenuItem(configurationName);
+            buttonGroup.add(radioButtonMenuItem);
+            radioButtonMenuItem.setSelected(configurationName.equals(configurable.getCurrentConfig()));
+            configMenu.add(radioButtonMenuItem);
+            radioButtonMenuItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Configurable newConfigurable = ModelManager.getInstance();
+                    if (!newConfigurable.getCurrentConfig().equals(configurationName)) {
+                        newConfigurable.applyNewConfig(configurationName);
+                        parent.revalidate();
+                        parent.repaint();
+                    }
+                }
+            });
+        }
+    }
+
+    private JCheckBoxMenuItem createSmartModeCheckBoxItem() {
+        final JCheckBoxMenuItem checkBox = new JCheckBoxMenuItem("Smart Mode", ModelManager.getInstance().isSmartModeOn());
+        checkBox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, 0));
+        checkBox.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                ModelManager.getInstance().setSmartMode(checkBox.isSelected());
+            }
+        });
+        return checkBox;
     }
 
     private JMenuItem createClearItem() {
@@ -38,7 +83,8 @@ public class EditorMenuBar extends JMenuBar {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ModelManager modelMgr = ModelManager.getInstance();
-                modelMgr.performCommand(modelMgr.new ClearMapCommand());
+                CommandHandler commandHandler = modelMgr;
+                commandHandler.performCommand(modelMgr.new ClearMapCommand());
             }
         });
         return settingsMenuItem;
@@ -52,8 +98,10 @@ public class EditorMenuBar extends JMenuBar {
             public void actionPerformed(ActionEvent e) {
                 ModelManager modelMgr = ModelManager.getInstance();
                 MapSettingsPanel mapSettingsPanel = new MapSettingsPanel(modelMgr.getMapWidth(), modelMgr.getMapHeight());
-                if (mapSettingsPanel.showDialog(parent, "Settings"))
-                    modelMgr.performCommand(modelMgr.new UpdateMapSizeCommand(mapSettingsPanel.getMapWidth(), mapSettingsPanel.getMapHeight()));
+                if (mapSettingsPanel.showDialog(parent, "Settings")) {
+                    CommandHandler commandHandler = modelMgr;
+                    commandHandler.performCommand(modelMgr.new UpdateMapSizeCommand(mapSettingsPanel.getMapWidth(), mapSettingsPanel.getMapHeight()));
+                }
             }
         });
         return settingsMenuItem;
@@ -109,8 +157,14 @@ public class EditorMenuBar extends JMenuBar {
                 fileChooser.setMultiSelectionEnabled(false);
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 if (fileChooser.showDialog(parent, "Open") == JFileChooser.APPROVE_OPTION) {
-                    ModelManager.getInstance().openMapFromJson(fileChooser.getSelectedFile().getAbsolutePath());
-                    ModelManager.getInstance().clearCommandHistory();
+                    try {
+                        ModelManager.getInstance().openMapFromJson(fileChooser.getSelectedFile().getAbsolutePath());
+                        CommandHandler commandHandler = ModelManager.getInstance();
+                        commandHandler.clearCommandHistory();
+                    }
+                    catch (Exception exception) {
+                        JOptionPane.showMessageDialog(null, exception.getMessage(), "File open error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -123,7 +177,8 @@ public class EditorMenuBar extends JMenuBar {
         undoMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ModelManager.getInstance().undoLastCommand();
+                CommandHandler commandHandler = ModelManager.getInstance();
+                commandHandler.undoLastCommand();
             }
         });
         return undoMenuItem;
@@ -139,5 +194,13 @@ public class EditorMenuBar extends JMenuBar {
                 f = new File(f.getAbsolutePath() + ".json");  //TODO - Разрулить! Здесь может быть косяк, т.к. может быть затерт существующий  ни в чем не виновный .json-файл
             ModelManager.getInstance().saveMapAsJson(f);
         }
+    }
+
+    public void checkForCommandListChangesAndUpdate(CommandHandler commandHandler) {
+        undoItem.setEnabled(commandHandler.getCommandHistorySize() != 0);
+    }
+
+    public void checkForSmartModeChangesAndUpdate() {
+        smartModeCheckBox.setSelected(ModelManager.getInstance().isSmartModeOn());
     }
 }

@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 public class TileTypeComponent extends Box {
     private ActionListener actionListener;
@@ -64,7 +65,7 @@ public class TileTypeComponent extends Box {
         super(BoxLayout.X_AXIS);
         tileType = _tileType;
         button = new JButton();
-        ImageIcon icon = new ImageIcon(ModelManager.IMAGES_DIR + tileType.getTexture());
+        ImageIcon icon = new ImageIcon(ModelManager.getInstance().getImageDirectoryName() + File.separator + tileType.getTexture());
         button.setIcon(icon);
         button.setPreferredSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
         button.setToolTipText(tileType.tooltipText());
