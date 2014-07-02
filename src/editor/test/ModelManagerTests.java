@@ -2,18 +2,15 @@ package editor.test;
 
 import editor.model.ModelManager;
 import editor.model.TileType;
-import editor.model.TileTypeComponent;
 import junit.framework.Assert;
 import junit.framework.TestCase;
-import org.junit.Test;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ModelManagerTests extends TestCase {
     public static void test_getBasicTileTypes() {
-        ModelManager modelManager = ModelManager.createModelManagerTestInstance("test_resources/tileTypes_small.json");
+        ModelManager modelManager = ModelManager.createModelManagerTestInstance("tileTypes_small.json");
         List<TileType> basicTileTypes = modelManager.getBasicTileTypes();
         Assert.assertEquals(2, basicTileTypes.size());
         Assert.assertEquals("[id: 1, name: GRASS1, texture: grass1.png ][GRASS, COMMON]", basicTileTypes.get(0).toString());
@@ -21,7 +18,7 @@ public class ModelManagerTests extends TestCase {
     }
 
     public static void test_getRelatedTileTypes() {
-        ModelManager modelManager = ModelManager.createModelManagerTestInstance("test_resources/tileTypes_small.json");
+        ModelManager modelManager = ModelManager.createModelManagerTestInstance("tileTypes_small.json");
         List<TileType> basicTileTypes = modelManager.getBasicTileTypes();
         List<TileType> relatedTileTypes = modelManager.getRelatedTileTypes(basicTileTypes.get(1));
         Assert.assertEquals(2, relatedTileTypes.size());
@@ -30,7 +27,7 @@ public class ModelManagerTests extends TestCase {
     }
 
     public static void test_getTileTypesWithTags_case1() {
-        ModelManager modelManager = ModelManager.createModelManagerTestInstance("test_resources/tileTypes_small.json");
+        ModelManager modelManager = ModelManager.createModelManagerTestInstance("tileTypes_small.json");
         List<String> tags = new ArrayList<String>();
         tags.add("DIRT");
         List<TileType> relatedTileTypes = modelManager.getTileTypesWithTags(tags);
@@ -40,7 +37,7 @@ public class ModelManagerTests extends TestCase {
     }
 
     public static void test_getTileTypesWithTags_case2() {
-        ModelManager modelManager = ModelManager.createModelManagerTestInstance("test_resources/tileTypes_medium.json");
+        ModelManager modelManager = ModelManager.createModelManagerTestInstance("tileTypes_medium.json");
         List<String> tags = new ArrayList<String>();
         tags.add("GRASS");
         tags.add("DIRT");
@@ -62,7 +59,7 @@ public class ModelManagerTests extends TestCase {
 
     public static void test_noTileTypesException() {
         try {
-            ModelManager.createModelManagerTestInstance("test_resources/tileTypes_empty.json");
+            ModelManager.createModelManagerTestInstance("tileTypes_empty.json");
             fail();
         } catch (RuntimeException e) { }
     }

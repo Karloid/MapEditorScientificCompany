@@ -3,9 +3,13 @@ package editor.gui;
 import editor.model.ModelManager;
 import editor.model.TileType;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public class TileTypeSelectorPanel extends JPanel {
@@ -47,8 +51,17 @@ public class TileTypeSelectorPanel extends JPanel {
     }
 
     private static JLabel createTileTypeSelector(TileType t) {
-        ImageIcon imageIcon = new ImageIcon(ModelManager.IMAGES_DIR + t.getTexture());
+        ImageIcon imageIcon = null;
+        try {
+            BufferedImage bufferedImageForTileType = new BufferedImage(ModelManager.TOOL_IMAGE_ICON_SIZE, ModelManager.TOOL_IMAGE_ICON_SIZE, BufferedImage.TYPE_INT_ARGB);
+            bufferedImageForTileType.getGraphics().drawImage(ImageIO.read(new File(ModelManager.getInstance().getImageDirectoryName() + File.separator + t.getTexture())), 0, 0, ModelManager.TOOL_IMAGE_ICON_SIZE, ModelManager.TOOL_IMAGE_ICON_SIZE, null);
+            imageIcon = new ImageIcon(bufferedImageForTileType);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
         JLabel selector = new JLabel(imageIcon);
+        selector.setToolTipText(t.tooltipText());
         selector.setPreferredSize(new Dimension(imageIcon.getIconWidth() + 4, imageIcon.getIconHeight() + 4));
         TileTypeSelectorMouseListener listener = new TileTypeSelectorMouseListener(t.getId(), selector);
         selector.addMouseListener(listener);

@@ -3,8 +3,11 @@ package editor.service;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class Utils {
+    private Utils() { }
 
     public static String readFile(String fileName) {
         StringBuilder sb = new StringBuilder();
