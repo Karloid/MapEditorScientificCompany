@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.Ellipse2D;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -15,6 +16,7 @@ public class MainFrame extends JFrame implements Observer {
     private JScrollPane scrollPane;
     private ToolboxPanel toolboxPanel;
     private EditorMenuBar menuBar;
+    private MinimapDialog minimapDialog;
 
     private final static String TITLE = "Super Map Editor";
 
@@ -43,14 +45,10 @@ public class MainFrame extends JFrame implements Observer {
         WorkingAreaPanel mapPanel = new WorkingAreaPanel();
         scrollPane = new JScrollPane(mapPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         mapPanel.setScrollPane(scrollPane);
-//        Point p = scrollPane.getViewport().getViewPosition();
-//        scrollPane.getViewport().setViewPosition(p);
-//        Dimension d1 = scrollPane.getViewport().getExtentSize();
-//        System.out.println("extent size: " + d1.width + "x" + d1.height);
-//        Dimension d = scrollPane.getViewport().getViewSize();
-//        System.out.println("view size: " + d.width + "x" + d.height);
-        toolboxPanel = new ToolboxPanel();
-        add(toolboxPanel, BorderLayout.WEST);
+        minimapDialog = new MinimapDialog(this, mapPanel);
+        mapPanel.registerObserver(minimapDialog);
+        minimapDialog.setVisible(true);
+        add(new ToolboxPanel(), BorderLayout.WEST);
         add(scrollPane);
     }
 

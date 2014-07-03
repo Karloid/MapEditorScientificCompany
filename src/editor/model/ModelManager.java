@@ -3,6 +3,7 @@ package editor.model;
 import com.google.gson.Gson;
 import editor.service.Utils;
 
+import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -32,7 +33,6 @@ public class ModelManager implements Configurable, CommandHandler {
     private static ModelManager instance;
 
     private static final int MAP_DEFAULT_WIDTH_IN_TILES = 30;
-
     private static final int MAP_DEFAULT_HEIGHT_IN_TILES = 20;
     private static final String STANDARD_CONFIGURATION_DIR = "configurations";
 
@@ -67,6 +67,10 @@ public class ModelManager implements Configurable, CommandHandler {
         if (instance == null)
             instance = new ModelManager(STANDARD_CONFIGURATION_DIR, null, "tileTypes.json");
         return instance;
+    }
+
+    public Dimension getMapSize() {
+        return new Dimension(getMapWidth(), getMapHeight());
     }
 
     public static ModelManager createModelManagerTestInstance(String jsonFileName) {

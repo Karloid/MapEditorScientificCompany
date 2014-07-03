@@ -9,9 +9,11 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class WorkingAreaPanel extends JPanel implements Observer {
     private int xOffset, yOffset;
@@ -22,10 +24,14 @@ public class WorkingAreaPanel extends JPanel implements Observer {
     private boolean isAllowedToRepaint = true;
     private int fromMouseX, fromMouseY;
 
+    private List<Observer> observers;
+
     private JScrollPane scrollPane;
+    private BufferedImage mapImage;
 
     public WorkingAreaPanel() {
         selectedX = selectedY = -1;
+        observers = new ArrayList<Observer>();
         ModelManager.getInstance().registerObserver(this);
         images = getLoadedFromFilesImages();
 
@@ -56,6 +62,15 @@ public class WorkingAreaPanel extends JPanel implements Observer {
         necessaryHeight = modelManager.getTileSizeInPixels() * modelManager.getMapHeight();
     }
 
+    public Image getMapImage() {
+        return mapImage;
+    }
+
+    public void registerObserver(Observer observer) {
+        if (!observers.contains(observer))
+            observers.add(observer);
+    }
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -67,26 +82,37 @@ public class WorkingAreaPanel extends JPanel implements Observer {
     }
 
     private void drawWorkingArea(Graphics2D graphics2D) {
+
         ModelManager modelManager = ModelManager.getInstance();
         final int tileSizeInPixels = modelManager.getTileSizeInPixels();
+//        if (mapImage != null)
+//            mapImage.flush();
+        mapImage = new BufferedImage(modelManager.getMapWidth() * tileSizeInPixels, modelManager.getMapHeight() * tileSizeInPixels, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = mapImage.createGraphics();
         xOffset = (getWidth() - necessaryWidth) / 2;
         yOffset = (getHeight() - necessaryHeight) / 2;
         for (int i = 0; i < modelManager.getMapWidth(); i++) {
             for (int j = 0; j < modelManager.getMapHeight(); j++) {
-                final int xToDraw = xOffset + i * tileSizeInPixels;
-                final int yToDraw = yOffset + j * tileSizeInPixels;
-                graphics2D.translate(xToDraw, yToDraw);
-                final Image IMAGE_TO_DRAW = images.get(modelManager.getTileAt(i, j));
-                final double xSizeMultiplier = (tileSizeInPixels + 0.0) / IMAGE_TO_DRAW.getWidth(this);
-                final double ySizeMultiplier = (tileSizeInPixels + 0.0) / IMAGE_TO_DRAW.getHeight(this);
-                graphics2D.scale(xSizeMultiplier, ySizeMultiplier);
-                graphics2D.drawImage(images.get(modelManager.getTileAt(i, j)), null, null);
-                graphics2D.scale(1.0 / xSizeMultiplier, 1.0 / ySizeMultiplier);
-                graphics2D.translate(-xToDraw, -yToDraw);
+//                final int xToDraw = /*xOffset + */i * tileSizeInPixels;
+//                final int yToDraw = /*yOffset + */j * tileSizeInPixels;
+//                g.translate(xToDraw, yToDraw);
+//                final Image IMAGE_TO_DRAW = images.get(modelManager.getTileAt(i, j));
+//                final double xSizeMultiplier = (tileSizeInPixels + 0.0) / IMAGE_TO_DRAW.getWidth(this);
+//                final double ySizeMultiplier = (tileSizeInPixels + 0.0) / IMAGE_TO_DRAW.getHeight(this);
+//                g.scale(xSizeMultiplier, ySizeMultiplier);
+//                g.drawImage(images.get(modelManager.getTileAt(i, j)), null, null);
+//                g.scale(1.0 / xSizeMultiplier, 1.0 / ySizeMultiplier);
+//                g.translate(-xToDraw, -yToDraw);
+                g.drawImage(images.get(modelManager.getTileAt(i, j)), i * tileSizeInPixels, j * tileSizeInPixels, tileSizeInPixels, tileSizeInPixels, null);
             }
         }
-
+        graphics2D.drawImage(mapImage, xOffset, yOffset, null);
         drawSelectedTileBorder(graphics2D);
+        g.dispose();
+       if (Math.random() > 0.5f) return;
+        for (Observer o : observers) {
+            o.update(null, null);
+        }
     }
 
     private void drawSelectedTileBorder(Graphics2D graphics2D) {
@@ -199,7 +225,7 @@ public class WorkingAreaPanel extends JPanel implements Observer {
         ModelManager.ModelManagerUpdateInfo updateInfo = (ModelManager.ModelManagerUpdateInfo)arg;
         switch (updateInfo.getUpdateType()) {
             case TOTAL_MAP_UPDATE:
-                doUpdate();
+                doUpdateTileSize(ModelManager.getInstance().getTileSizeInPixels());
                 break;
             case TILE_UPDATE:
                 int[] args = (int[])updateInfo.getArguments();
@@ -208,14 +234,23 @@ public class WorkingAreaPanel extends JPanel implements Observer {
         }
     }
 
-    private void doUpdate() {
-        resizePanel();
+    private void doUpdateTileSize(int oldTileSize) {
+        resizePanel(oldTileSize);
         repaint();
     }
 
-    private void resizePanel() {
+    private void resizePanel(int oldTileSize) {
+        Point oldViewPosition = getViewPosition();
+        Dimension oldViewSize = new Dimension(getViewSize().width, getViewSize().height);
         computeNecessarySize();
         setNecessarySizeForComponent();
+        if (!getExtentSize().equals(getViewSize())) {
+            double scale = (ModelManager.getInstance().getTileSizeInPixels() + 0.0) / oldTileSize;
+            Dimension newViewSize = getViewSize();
+            int newViewXPosition = (int)(Math.round(oldViewPosition.getX() * scale/* + (newViewSize.getWidth() - oldViewSize.getWidth()) / 2*/));
+            int newViewYPosition = (int)(Math.round(oldViewPosition.getY() * scale/* + (newViewSize.getHeight() - oldViewSize.getHeight()) / 2*/));
+            scrollPane.getViewport().setViewPosition(new Point(newViewXPosition, newViewYPosition));
+        }
     }
 
     private void doUpdate(int x, int y) {
@@ -227,6 +262,18 @@ public class WorkingAreaPanel extends JPanel implements Observer {
         scrollPane = pane;
     }
 
+    public Point getViewPosition() {
+        return scrollPane.getViewport().getViewPosition();
+    }
+
+    public Dimension getExtentSize() {
+        return scrollPane.getViewport().getExtentSize();
+    }
+
+    public Dimension getViewSize() {
+        return scrollPane.getViewport().getViewSize();
+    }
+
     private class WorkingAreaPanelMouseHandler extends MouseAdapter {
         @Override
         public void mouseDragged(MouseEvent e) {
@@ -234,9 +281,9 @@ public class WorkingAreaPanel extends JPanel implements Observer {
             if ((modifiersEx & MouseEvent.BUTTON2_DOWN_MASK) != 0) {
                 int dx = WorkingAreaPanel.this.fromMouseX - e.getX();
                 int dy = WorkingAreaPanel.this.fromMouseY - e.getY();
-                Point viewPosition = WorkingAreaPanel.this.scrollPane.getViewport().getViewPosition();
-                Dimension extentSize = WorkingAreaPanel.this.scrollPane.getViewport().getExtentSize();
-                Dimension viewSize = WorkingAreaPanel.this.scrollPane.getViewport().getViewSize();
+                Point viewPosition = WorkingAreaPanel.this.getViewPosition();
+                Dimension extentSize = WorkingAreaPanel.this.getExtentSize();
+                Dimension viewSize = WorkingAreaPanel.this.getViewSize();
                 int newViewX = viewPosition.x + dx;
                 int newViewY = viewPosition.y + dy;
                 if (newViewX < 0)
@@ -266,8 +313,10 @@ public class WorkingAreaPanel extends JPanel implements Observer {
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
-            if (ModelManager.getInstance().increaseTileSizeInPixels(e.getWheelRotation()))
-                WorkingAreaPanel.this.doUpdate();
+            ModelManager modelManager = ModelManager.getInstance();
+            int oldTileSize = modelManager.getTileSizeInPixels();
+            if (modelManager.increaseTileSizeInPixels(e.getWheelRotation()))
+                WorkingAreaPanel.this.doUpdateTileSize(oldTileSize);
         }
 
         @Override
